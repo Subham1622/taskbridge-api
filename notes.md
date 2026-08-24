@@ -743,3 +743,208 @@ Verified organization-scoped access through request headers prior to service inv
 ### Human Judgment
 
 Tenant isolation requirements were validated at both controller and repository layers.
+
+# Notification Module Review Findings
+
+## Finding 29 - Notification Entity Maintainability Improvement
+
+### Observation
+
+The generated Notification entity initially contained manually implemented getter methods.
+
+### Impact
+
+The implementation contained unnecessary boilerplate code and reduced maintainability.
+
+### Resolution
+
+Introduced Lombok:
+
+```java
+@Getter
+@ToString
+```
+
+while retaining the explicit constructor and JPA-compatible entity design.
+
+### Human Judgment
+
+The generated alternative using final fields and @RequiredArgsConstructor was rejected because it could complicate JPA entity lifecycle management. A balanced approach was selected using Lombok for boilerplate reduction while preserving entity compatibility.
+
+---
+
+## Finding 30 - JPA Entity Design Review
+
+### Observation
+
+A generated alternative version introduced final fields and Lombok-generated constructors.
+
+### Impact
+
+JPA entity proxy creation and persistence behavior could become more complex and less predictable.
+
+### Resolution
+
+Retained a traditional JPA entity structure with:
+
+- Explicit constructor
+- Protected default constructor
+- Mutable JPA-managed fields
+
+### Human Judgment
+
+JPA framework requirements were prioritized over aggressive immutability patterns.
+
+---
+
+## Finding 31 - Notification Read State Encapsulation
+
+### Observation
+
+A generated alternative version exposed readStatus modification through a setter.
+
+### Impact
+
+Notification state could be modified arbitrarily rather than through domain-specific behavior.
+
+### Resolution
+
+Retained:
+
+```java
+markAsRead()
+```
+
+and avoided exposing a public setter.
+
+### Human Judgment
+
+Domain behavior was preferred over unrestricted state mutation.
+
+---
+
+## Finding 32 - Multi-Tenant Repository Enforcement Verified
+
+### Observation
+
+All NotificationRepository methods require organizationId filtering.
+
+### Impact
+
+Cross-tenant notification access risk was minimized.
+
+### Resolution
+
+Verified tenant-scoped filtering for:
+
+- notification retrieval
+- unread retrieval
+- project retrieval
+- event retrieval
+- id lookup
+
+### Human Judgment
+
+Repository-level enforcement was validated against SaaS isolation requirements.
+
+---
+
+## Finding 33 - Notification Retrieval Security Review
+
+### Observation
+
+Notification retrieval operations were reviewed to ensure tenant-aware access.
+
+### Impact
+
+Notifications belonging to another organization must never be returned.
+
+### Resolution
+
+Verified repository and service methods consistently require organizationId.
+
+### Human Judgment
+
+Tenant isolation requirements were reviewed and confirmed.
+
+---
+
+## Finding 34 - Notification Read Tracking Verification
+
+### Observation
+
+The service implements notification read tracking using domain behavior.
+
+### Impact
+
+Users can safely mark notifications as read while preserving notification history.
+
+### Resolution
+
+Validated use of:
+
+```java
+notification.markAsRead();
+```
+
+within a transactional operation.
+
+### Human Judgment
+
+The design preserves readability, maintainability, and future extensibility.
+
+---
+
+## Finding 35 - Tenant-Aware Notification Lookup Verification
+
+### Observation
+
+Notification updates use:
+
+```java
+findByIdAndOrganizationId(...)
+```
+
+instead of:
+
+```java
+findById(...)
+```
+
+### Impact
+
+Cross-tenant notification updates are prevented.
+
+### Resolution
+
+Validated tenant-aware repository lookup before read-status updates.
+
+### Human Judgment
+
+Repository-level security was preferred over service-layer filtering.
+
+---
+
+## Finding 36 - Notification Controller Tenant Enforcement
+
+### Observation
+
+NotificationController requires:
+
+```java
+X-Tenant-ID
+```
+
+on every endpoint.
+
+### Impact
+
+Tenant context is enforced at the API boundary before service access occurs.
+
+### Resolution
+
+Validated tenant-scoped access through request headers and service delegation.
+
+### Human Judgment
+
+Tenant isolation was verified across controller, service, and repository layers.
