@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +33,7 @@ public class ProjectService {
 	 * @param tenantId   the tenant ID
 	 * @return the created project response DTO
 	 */
+	@Transactional
 	public ProjectResponseDTO createProject(ProjectRequestDTO requestDTO, String tenantId) {
 		logger.info("Creating project for tenant: {}", tenantId);
 
@@ -54,12 +56,12 @@ public class ProjectService {
 	 * @param tenantId  the tenant ID
 	 * @return the updated project response DTO
 	 */
+	@Transactional
 	public ProjectResponseDTO updateProjectStatus(Long projectId, String status, String tenantId) {
 		logger.info("Updating status of project {} for tenant: {}", projectId, tenantId);
 
-		Project project = projectRepository.findById(projectId)
-				.filter(p -> p.getTenantId().equals(tenantId))
-				.orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
+		Project project = projectRepository.findByIdAndTenantId(projectId, tenantId)
+        .orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
 
 		project.setStatus(status);
 		Project updatedProject = projectRepository.save(project);
@@ -88,12 +90,12 @@ public class ProjectService {
 	 * @param projectId the project ID
 	 * @param tenantId  the tenant ID
 	 */
+	@Transactional
 	public void deleteProject(Long projectId, String tenantId) {
 		logger.info("Deleting project {} for tenant: {}", projectId, tenantId);
 
-		Project project = projectRepository.findById(projectId)
-				.filter(p -> p.getTenantId().equals(tenantId))
-				.orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
+		Project project = projectRepository.findByIdAndTenantId(projectId, tenantId)
+        .orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
 
 		projectRepository.delete(project);
 	}

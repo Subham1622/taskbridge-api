@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for Project entity.
@@ -21,4 +22,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 	 */
 	@Query("SELECT p FROM Project p WHERE p.teamId = :teamId AND p.tenantId = :tenantId")
 	List<Project> findByTeamIdAndTenantId(@Param("teamId") Long teamId, @Param("tenantId") String tenantId);
+
+	Optional<Project> findByIdAndTenantId(
+		Long id,
+		String tenantId
+	);
 }
