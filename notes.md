@@ -494,3 +494,82 @@ Remediated Project Service implementation completed.
 ### Assessment Relevance
 
 The Project Service now provides a suitable foundation for implementing the Notification & Audit Service.
+
+---
+
+# SPEC.md Review Findings
+
+## Finding 11 - Generated API Contract Mismatch
+
+### Observation
+
+The generated specification proposed:
+
+- GET /audit-entries
+- GET /audit-entries/{id}
+- GET /notifications
+
+### Impact
+
+The generated API examples did not fully align with the approved TaskBridge requirements.
+
+### Resolution
+
+The specification was updated to document the required implementation endpoints:
+
+- POST /audit
+- GET /audit/{projectId}
+- GET /notifications/{userId}
+- PATCH /notifications/{id}/read
+
+### Human Judgment
+
+The generated content appeared technically valid but required validation against the product brief before acceptance.
+
+---
+
+## Finding 12 - Missing Audit Immutability Requirements
+
+### Observation
+
+Audit records were described but immutability requirements were not explicitly documented.
+
+### Resolution
+
+Added a dedicated Audit Immutability Requirements section.
+
+---
+
+## Finding 13 - Missing Authorization Requirements
+
+### Observation
+
+Security requirements referenced secure APIs but did not define authorization rules.
+
+### Resolution
+
+Added Authorization Rules section covering user access restrictions and service authentication.
+
+---
+
+## Finding 14 - Incomplete Multi-Tenant Isolation Definition
+
+### Observation
+
+Tenant isolation was described conceptually but did not define repository or service-layer enforcement.
+
+### Resolution
+
+Added explicit organizationId filtering and tenant validation requirements.
+
+---
+
+## Finding 15 - Human Validation of Specification
+
+### Observation
+
+The AI-generated specification required verification against the TaskBridge requirements before implementation.
+
+### Resolution
+
+Performed manual review and refinement of generated requirements prior to implementation approval.
