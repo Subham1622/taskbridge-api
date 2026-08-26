@@ -1,5 +1,9 @@
 package com.taskbridge.projects.service;
 
+import com.taskbridge.notifications.entity.Notification;
+import com.taskbridge.audit.dto.AuditRequestDTO;
+import com.taskbridge.audit.service.AuditService;
+import com.taskbridge.notifications.service.NotificationService;
 import com.taskbridge.projects.dto.ProjectRequestDTO;
 import com.taskbridge.projects.dto.ProjectResponseDTO;
 import com.taskbridge.projects.entity.Project;
@@ -22,9 +26,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectService {
 
+	private static final String ENTITY_TYPE_PROJECT = "PROJECT";
+	private static final String SYSTEM_USER = "SYSTEM";
+
 	private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
 	private final ProjectRepository projectRepository;
+	private final AuditService auditService;
+	private final NotificationService notificationService;
 
 	/**
 	 * Creates a new project.
@@ -45,6 +54,29 @@ public class ProjectService {
 		project.setTenantId(tenantId);
 
 		Project savedProject = projectRepository.save(project);
+
+		auditService.createAuditEntry(
+				new AuditRequestDTO(
+						"CREATED",
+						ENTITY_TYPE_PROJECT,
+						savedProject.getId(),
+						SYSTEM_USER,
+						tenantId,
+						null,
+						savedProject.getStatus()
+				)
+		);
+
+		notificationService.createNotification(
+				new Notification(
+						"TEAM_" + savedProject.getTeamId(),
+						savedProject.getId(),
+						"CREATED",
+						"Project created: " + savedProject.getName(),
+						tenantId
+				)
+		);
+
 		return mapToResponseDTO(savedProject);
 	}
 
@@ -63,8 +95,34 @@ public class ProjectService {
 		Project project = projectRepository.findByIdAndTenantId(projectId, tenantId)
         .orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
 
+		String previousStatus = project.getStatus();
+		
 		project.setStatus(status);
+
 		Project updatedProject = projectRepository.save(project);
+
+		auditService.createAuditEntry(
+				new AuditRequestDTO(
+						"UPDATED",
+						ENTITY_TYPE_PROJECT,
+						updatedProject.getId(),
+						SYSTEM_USER,
+						tenantId,
+						previousStatus,
+						updatedProject.getStatus()
+				)
+		);
+	
+		notificationService.createNotification(
+				new Notification(
+						"TEAM_" + updatedProject.getTeamId(),
+						updatedProject.getId(),
+						"UPDATED",
+						"Project updated: " + updatedProject.getName(),
+						tenantId
+				)
+		);
+
 		return mapToResponseDTO(updatedProject);
 	}
 
@@ -96,6 +154,28 @@ public class ProjectService {
 
 		Project project = projectRepository.findByIdAndTenantId(projectId, tenantId)
         .orElseThrow(() -> new ProjectNotFoundException("Project not found with ID: " + projectId));
+
+		auditService.createAuditEntry(
+				new AuditRequestDTO(
+						"CLOSED",
+						ENTITY_TYPE_PROJECT,
+						project.getId(),
+						SYSTEM_USER,
+						tenantId,
+						project.getStatus(),
+						"CLOSED"
+				)
+		);
+	
+		notificationService.createNotification(
+				new Notification(
+						"TEAM_" + project.getTeamId(),
+						project.getId(),
+						"CLOSED",
+						"Project closed: " + project.getName(),
+						tenantId
+				)
+		);
 
 		projectRepository.delete(project);
 	}

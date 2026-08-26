@@ -35,3 +35,18 @@ mvn spring-boot:run
 ## H2 Console
 
 http://localhost:8080/h2-console
+
+
+## Validation Evidence
+
+Screenshots demonstrating:
+
+- Project creation
+- Audit integration
+- Notification integration
+- Tenant isolation
+- H2 database state
+
+are available under:
+
+docs/screenshots/

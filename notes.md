@@ -53,6 +53,25 @@ Compliance requirements cannot be satisfied because there is no historical recor
 ### Recommendation
 Integrate with the Notification & Audit Service to create immutable audit entries for create, update-status, and delete operations.
 
+### Resolution
+ProjectService was integrated with AuditService.
+
+Audit entries are now created for:
+
+- Project creation
+- Project status updates
+- Project closure
+
+### Human Judgment
+The integration required assumptions because authenticated user identity propagation was not available in the current implementation.
+
+### Status
+Resolved.
+
+Future enhancements:
+
+- Authenticated actor identity propagation
+
 ---
 
 ## Finding 2 - Missing Notification Dispatch Logic
@@ -69,6 +88,26 @@ Users may be unaware of milestone changes, resulting in communication gaps and i
 ### Recommendation
 Publish events from the Project Service and generate notifications for all associated project team members.
 
+### Resolution
+ProjectService was integrated with NotificationService.
+
+Notifications are now generated for:
+
+- Project creation
+- Project status updates
+- Project closure
+
+### Human Judgment
+The implementation required placeholder recipient resolution because team-member information is not currently available in the project domain model.
+
+### Status
+Resolved.
+
+Future enhancements:
+
+- Team-member recipient resolution
+- User-specific notification delivery
+
 ---
 
 ## Finding 3 - No Integration Contract for Downstream Services
@@ -84,6 +123,31 @@ The service is tightly coupled to its own functionality and cannot participate i
 
 ### Recommendation
 Define an integration contract for project lifecycle events and invoke audit and notification workflows whenever project state changes occur.
+
+### Resolution
+Implemented a lightweight integration contract between:
+
+- ProjectService
+- AuditService
+- NotificationService
+
+Lifecycle events triggering downstream workflows:
+
+- CREATED
+- UPDATED
+- CLOSED
+
+### Human Judgment
+A direct service-invocation approach was selected for assessment purposes instead of introducing message brokers or event-driven infrastructure.
+
+### Status
+Resolved.
+
+Future enhancements:
+
+- Event-driven messaging architecture
+- Authenticated user propagation
+- Team membership integration
 
 ---
 
@@ -133,6 +197,22 @@ Users from one organization could potentially access data belonging to another o
 ### Recommendation
 All repository queries must include organizationId filtering and tenant context must be validated at the service layer.
 
+### Status
+
+Resolved.
+
+Tenant-aware repository methods were implemented and validated across Project, Audit, and Notification modules.
+
+Examples:
+
+- findByIdAndTenantId(...)
+- findByEntityIdAndOrganizationId(...)
+- findByIdAndOrganizationId(...)
+
+Future enhancements:
+
+- Centralized tenant-context enforcement
+
 ---
 
 ## Finding 7 - Missing Authorization Controls
@@ -148,6 +228,14 @@ Authenticated users may perform actions on projects outside their permitted scop
 
 ### Recommendation
 Implement RBAC and organization-level authorization checks for all project operations.
+
+### Status
+
+Partially Resolved.
+
+Tenant isolation is enforced through repository and service-layer filtering.
+
+RBAC and ownership-based authorization remain future enhancements.
 
 ---
 
@@ -445,7 +533,7 @@ Successful build and execution validation will provide evidence that:
 - The project structure is correct.
 - Package refactoring was successful.
 - Dependencies are correctly configured.
-- The remediated Project Service is runnable before Notification & Audit Service integration.
+- The remediated Project Service is runnable and integrated with AuditService and NotificationService for project lifecycle events.
 
 
 ## Runtime Validation #1 - Application Startup Success
@@ -466,7 +554,7 @@ The 404 response confirmed that:
 - No endpoint was mapped to the root URL (/).
 
 ### Outcome
-Verified that the application is runnable before implementation of the Notification & Audit Service.
+Verified that the application is runnable and provides the foundation for integrated Project, Audit, and Notification workflows.
 
 ## Project Service Review Outcome
 
@@ -482,18 +570,20 @@ Remediated Project Service implementation completed.
 - Global exception handling
 - Tenant-aware filtering
 - JPA repository implementation
+- AuditService integration
+- NotificationService integration
 
 ### Remaining Gaps
 
-- Audit service integration not yet implemented
-- Notification service integration not yet implemented
+- Actor identity propagation not yet implemented
+- Team-member recipient resolution not yet implemented
 - Hard delete remains a compliance consideration
 - Standardized API error contract could be improved
 - Tenant filtering can be pushed closer to the repository layer
 
 ### Assessment Relevance
 
-The Project Service now provides a suitable foundation for implementing the Notification & Audit Service.
+The Project Service now participates in project lifecycle workflows and triggers audit and notification processing for CREATED, UPDATED, and CLOSED events.
 
 ---
 
@@ -948,3 +1038,125 @@ Validated tenant-scoped access through request headers and service delegation.
 ### Human Judgment
 
 Tenant isolation was verified across controller, service, and repository layers.
+
+---
+
+## Finding XX - Cross-Service Integration Hallucination
+
+### Observation
+
+Multiple Copilot generations proposed AuditService, NotificationService, DTO constructors and method signatures that did not exist in the actual implementation.
+
+### Impact
+
+Generated changes would not compile and could introduce architectural inconsistencies.
+
+### Resolution
+
+Rejected generated integration code and manually validated service contracts before proceeding.
+
+### Human Judgment
+
+Cross-service integrations require verification against actual implementations rather than relying solely on generated suggestions.
+
+---
+
+## Finding 40 - Lightweight Cross-Service Integration
+
+### Observation
+
+The TaskBridge use case requires project lifecycle events to trigger audit and notification workflows.
+
+### Impact
+
+Without integration, audit creation and notification generation cannot be verified through business-flow tests.
+
+### Resolution
+
+Integrated ProjectService with:
+
+- AuditService
+- NotificationService
+
+for:
+
+- CREATED
+- UPDATED
+- CLOSED
+
+events.
+
+### Human Judgment
+
+The implementation required assumptions because user identity propagation and notification recipient resolution were not available in the current domain model.
+
+The following placeholders were used:
+
+```text
+actorUserId = SYSTEM
+recipientUserId = TEAM_<teamId>
+```
+
+These assumptions satisfy assessment requirements while documenting future enhancement opportunities.
+
+### Status
+
+Resolved.
+
+Implemented through ProjectService integration with:
+
+- AuditService
+- NotificationService
+
+for CREATED, UPDATED and CLOSED lifecycle events.
+
+Remaining enhancements:
+
+- Authenticated actor identity propagation
+- Team-member recipient resolution
+
+---
+
+## Finding 41 - Integration Assumptions Documentation
+
+### Observation
+
+Project lifecycle integration required information that was not available in the current domain model.
+
+Missing information included:
+
+- Authenticated actor identity
+- Team-member recipient resolution
+
+### Impact
+
+A complete production-grade workflow could not be implemented without introducing additional services and domain relationships.
+
+### Resolution
+
+Implemented lightweight placeholder values:
+
+actorUserId = SYSTEM
+
+recipientUserId = TEAM_<teamId>
+
+### Human Judgment
+
+The assumptions were intentionally documented rather than hidden. This allowed the assessment requirements to be satisfied while clearly identifying future enhancements needed for a production implementation.
+
+### Status
+
+Accepted and documented.
+
+
+### Multi-Tenant Assumption
+
+For the assessment implementation, tenantId and organizationId are treated as the same logical identifier.
+
+The X-Tenant-ID request header is propagated as:
+
+- Project.tenantId
+- AuditEntry.organizationId
+- Notification.organizationId
+
+A production implementation may introduce separate tenant and organization domain concepts if required.
