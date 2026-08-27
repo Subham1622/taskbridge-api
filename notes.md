@@ -1160,3 +1160,48 @@ The X-Tenant-ID request header is propagated as:
 - Notification.organizationId
 
 A production implementation may introduce separate tenant and organization domain concepts if required.
+
+---
+
+## Finding 42 - AI-Generated Test Case Mismatch
+
+### Observation
+
+Multiple attempts were made to generate service-layer unit tests using AI assistance.
+
+Generated test implementations repeatedly referenced:
+
+- Non-existent method signatures
+- Incorrect repository methods
+- Incorrect DTO access patterns
+- Incorrect event names
+- Outdated service contracts
+
+Examples included:
+
+- findById(...) instead of findByIdAndTenantId(...)
+- createProject(Project) instead of createProject(ProjectRequestDTO, tenantId)
+- getEventType() instead of eventType() for Java Records
+
+### Impact
+
+Generated tests could not be accepted without manual review and correction.
+
+### Resolution
+
+Test classes were implemented through manual validation of:
+
+- Service contracts
+- Repository contracts
+- DTO definitions
+- Entity constructors
+
+AI assistance was used for test structure and ideas, but final test implementations were manually reviewed and corrected.
+
+### Human Judgment
+
+Manual verification was required to ensure test cases reflected the actual implementation rather than generated assumptions.
+
+### Status
+
+Resolved.
